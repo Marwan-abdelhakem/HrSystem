@@ -33,7 +33,7 @@ export default function AdminTasksPage() {
     const { data: tasks, loading: loadingTasks, error: tasksError, refetch } = useApi(getAllTasks);
 
     // Both HR and Employee users — Admin can assign to either
-    const { data: assignable, loading: loadingAssignable } = useApi(getAssignableUsers);
+    const { data: assignable, loading: loadingAssignable, error: assignableError } = useApi(getAssignableUsers);
 
     // id → user object map for the table
     const userMap = {};
@@ -326,37 +326,47 @@ export default function AdminTasksPage() {
                                                 Assign To * <span className="text-slate-400 font-normal">(HR or Employee)</span>
                                             </span>
                                         </label>
-                                        <select name="assignTo" value={form.assignTo} onChange={handleChange}
-                                            className="select select-bordered select-sm bg-white focus:border-primary">
-                                            <option value="">
-                                                {loadingAssignable ? "Loading users…" : "Select a person…"}
-                                            </option>
 
-                                            {/* HR group */}
-                                            {hrUsers.length > 0 && (
-                                                <optgroup label="── HR Staff ──">
-                                                    {hrUsers.map((u) => (
-                                                        <option key={u._id} value={u._id}>
-                                                            {u.user_name} — {u.email}
-                                                        </option>
-                                                    ))}
-                                                </optgroup>
-                                            )}
+                                        {assignableError ? (
+                                            <div className="alert alert-error py-2 text-xs">
+                                                <AlertCircle size={13} />
+                                                Failed to load users: {assignableError}
+                                            </div>
+                                        ) : (
+                                            <select name="assignTo" value={form.assignTo} onChange={handleChange}
+                                                className="select select-bordered select-sm bg-white focus:border-primary">
+                                                <option value="">
+                                                    {loadingAssignable ? "Loading users…" : `Select a person… (${(assignable ?? []).length} available)`}
+                                                </option>
 
-                                            {/* Employee group */}
-                                            {empUsers.length > 0 && (
-                                                <optgroup label="── Employees ──">
-                                                    {empUsers.map((u) => (
-                                                        <option key={u._id} value={u._id}>
-                                                            {u.user_name} — {u.email}
-                                                        </option>
-                                                    ))}
-                                                </optgroup>
-                                            )}
-                                        </select>
+                                                {/* HR group */}
+                                                {hrUsers.length > 0 && (
+                                                    <optgroup label="── HR Staff ──">
+                                                        {hrUsers.map((u) => (
+                                                            <option key={u._id} value={u._id}>
+                                                                {u.user_name} — {u.email}
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                )}
 
-                                        {!loadingAssignable && (assignable ?? []).length === 0 && (
-                                            <p className="text-xs text-error mt-1">No users found.</p>
+                                                {/* Employee group */}
+                                                {empUsers.length > 0 && (
+                                                    <optgroup label="── Employees ──">
+                                                        {empUsers.map((u) => (
+                                                            <option key={u._id} value={u._id}>
+                                                                {u.user_name} — {u.email}
+                                                            </option>
+                                                        ))}
+                                                    </optgroup>
+                                                )}
+                                            </select>
+                                        )}
+
+                                        {!loadingAssignable && !assignableError && (assignable ?? []).length === 0 && (
+                                            <p className="text-xs text-slate-400 mt-1">
+                                                No HR or Employee users found. Create users first from User Management.
+                                            </p>
                                         )}
                                     </div>
 

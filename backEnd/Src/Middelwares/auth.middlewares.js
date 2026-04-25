@@ -3,18 +3,28 @@ import * as dbService from "../DB/dbService.js"
 import UserModel from "../DB/model/user.model.js"
 
 export const authentication = async (req, res, next) => {
-    const { authorization } = req.headers
-    const decoded = verifyTokin({ token: authorization })
+    try {
+        const { authorization } = req.headers
+        if (!authorization) {
+            return next(new Error("No token provided", { cause: 401 }))
+        }
 
-    const user = await dbService.findById({ model: UserModel, id: { _id: decoded._id } })
+        const decoded = verifyTokin({ token: authorization })
+        if (!decoded?._id) {
+            return next(new Error("Invalid token", { cause: 401 }))
+        }
 
-    if (!user) {
-        return next(new Error("User Not Founded", { cause: 409 }))
+        const user = await dbService.findById({ model: UserModel, id: decoded._id })
+        if (!user) {
+            return next(new Error("User not found", { cause: 401 }))
+        }
+
+        req.user = user
+        return next()
+    } catch (err) {
+        return next(new Error("Invalid or expired token", { cause: 401 }))
     }
-    req.user = user
-    return next()
 }
-
 
 export const authorization = ({ role = [] }) => {
     return async (req, res, next) => {
