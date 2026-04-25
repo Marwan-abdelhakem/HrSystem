@@ -1,0 +1,4 @@
+backEnd/node_modules/
+frontEnd/node_modules/
+backEnd/Src/config/.env
+frontEnd/.env.example
