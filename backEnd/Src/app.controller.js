@@ -11,24 +11,13 @@ import cookieParser from "cookie-parser"
 import cors from "cors"
 import path from "path"
 
-const ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    process.env.FRONTEND_URL,
-].filter(Boolean)
+
 
 const bootStrap = async (app, express) => {
-    // ── CORS — must be first ──────────────────────────────────────────────────
+
     app.use(cors({
-        origin: (origin, callback) => {
-            // Allow requests with no origin (curl, Postman, server-to-server)
-            if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-                return callback(null, true)
-            }
-            callback(new Error(`CORS: origin ${origin} not allowed`))
-        },
+        origin: process.env.FRONTEND_URL || "http://localhost:5173",
         credentials: true,
-        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization", "authorization"],
     }))
 
     app.use(express.json())
