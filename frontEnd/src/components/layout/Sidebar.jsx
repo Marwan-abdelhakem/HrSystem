@@ -9,6 +9,7 @@ import {
     PlusCircle,
     Briefcase,
     Video,
+    UserPlus,
     X,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
@@ -26,6 +27,7 @@ const NAV_CONFIG = {
     HR: [
         { label: "Dashboard", to: "/hr", icon: LayoutDashboard },
         { label: "Employee List", to: "/hr/employees", icon: Users },
+        { label: "Create Employee", to: "/hr/create", icon: UserPlus },
         { label: "Leave Requests", to: "/hr/leave", icon: FileText },
         { label: "Task Assignment", to: "/hr/tasks", icon: ClipboardList },
     ],

@@ -40,6 +40,15 @@ router.get(
     userService.getAssignableUsers
 )
 
+// ─── HR: create an employee (role is always locked to "Employee") ─────────────
+
+router.post(
+    "/createEmployee",
+    authentication,
+    authorization({ role: ["HR"] }),
+    userService.createEmployee
+)
+
 router.post(
     "/createUser",
     authentication,

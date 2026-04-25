@@ -1,28 +1,31 @@
 import { motion } from "framer-motion";
-import { Users, AlertCircle } from "lucide-react";
+import { Users, AlertCircle, UserPlus } from "lucide-react";
+import { Link } from "react-router-dom";
 import PageHeader from "../../components/ui/PageHeader";
 import useApi from "../../hooks/useApi";
-import { getAllUsers } from "../../api/services/userService";
-
-const ROLE_BADGE = { Admin: "badge-error", HR: "badge-warning", Employee: "badge-success" };
+import { getEmployees } from "../../api/services/userService";
 
 export default function EmployeesPage() {
-    const { data: users, loading, error } = useApi(getAllUsers);
-
-    const employees = users?.filter((u) => u.role === "Employee") ?? [];
+    // getEmployees is accessible to both Admin and HR
+    const { data: employees, loading, error } = useApi(getEmployees);
 
     return (
         <div>
             <PageHeader
                 title="Employee List"
-                subtitle="View all employees and their salary details."
+                subtitle="All employees in the system."
+                action={
+                    <Link to="/hr/create" className="btn btn-primary btn-sm gap-2">
+                        <UserPlus size={15} /> Create Employee
+                    </Link>
+                }
             />
 
             <div className="card-soft">
                 <div className="flex items-center gap-2 mb-5">
                     <Users size={17} className="text-primary" />
                     <h2 className="font-semibold text-slate-700">Employees</h2>
-                    {!loading && (
+                    {!loading && employees && (
                         <span className="badge badge-primary badge-sm ml-auto">{employees.length}</span>
                     )}
                 </div>
@@ -35,6 +38,14 @@ export default function EmployeesPage() {
                     <div className="flex items-center gap-2 text-error py-8 justify-center text-sm">
                         <AlertCircle size={16} /> {error}
                     </div>
+                ) : !employees || employees.length === 0 ? (
+                    <div className="flex flex-col items-center gap-3 py-14 text-slate-400">
+                        <Users size={40} className="opacity-30" />
+                        <p className="text-sm">No employees yet.</p>
+                        <Link to="/hr/create" className="btn btn-primary btn-sm gap-2">
+                            <UserPlus size={14} /> Create First Employee
+                        </Link>
+                    </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="table table-sm">
@@ -44,9 +55,6 @@ export default function EmployeesPage() {
                                     <th>Name</th>
                                     <th>Email</th>
                                     <th>Phone</th>
-                                    <th>Basic Salary</th>
-                                    <th>Total Salary</th>
-                                    <th>Role</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -59,25 +67,21 @@ export default function EmployeesPage() {
                                         className="hover:bg-slate-50 transition-colors"
                                     >
                                         <td className="text-slate-400 text-xs">{i + 1}</td>
-                                        <td className="font-medium text-slate-800">{u.user_name}</td>
-                                        <td className="text-slate-500 text-sm">{u.email}</td>
-                                        <td className="text-slate-500 text-sm">{u.phone}</td>
-                                        <td className="text-sm">{u.basicSalary?.toLocaleString() ?? "—"} EGP</td>
-                                        <td className="text-sm font-semibold text-primary">
-                                            {u.totalSalary?.toLocaleString() ?? "—"} EGP
-                                        </td>
                                         <td>
-                                            <span className={`badge badge-sm ${ROLE_BADGE[u.role] ?? "badge-ghost"}`}>
-                                                {u.role}
-                                            </span>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-full bg-primary/10 text-primary
+                                                                flex items-center justify-center text-xs font-bold shrink-0">
+                                                    {u.user_name.slice(0, 2).toUpperCase()}
+                                                </div>
+                                                <span className="font-medium text-slate-800 text-sm">{u.user_name}</span>
+                                            </div>
                                         </td>
+                                        <td className="text-slate-500 text-sm">{u.email}</td>
+                                        <td className="text-slate-500 text-sm">{u.phone ?? "—"}</td>
                                     </motion.tr>
                                 ))}
                             </tbody>
                         </table>
-                        {employees.length === 0 && (
-                            <p className="text-center text-slate-400 text-sm py-10">No employees found.</p>
-                        )}
                     </div>
                 )}
             </div>

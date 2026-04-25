@@ -55,13 +55,44 @@ export const createUser = async (req, res, next) => {
         data: [{ role, user_name, email, password: hashedPassword, phone, basicSalary, housingAllowance, transportationAllowance, otherAllowance, totalSalary }]
     })
 
-    // Automatically provision an annual leave balance for the new employee
     const leaveBalance = await dbService.create({
         model: LeaveModel,
         data: [{ totalDays: 20, leaveType: "annual", employeeID: newUser._id }]
     })
 
     return successResponse({ res, statusCode: 201, message: "User created successfully", data: { user: newUser, leaveBalance } })
+}
+
+// ─── HR: create an employee — role is always forced to "Employee" ─────────────
+
+export const createEmployee = async (req, res, next) => {
+    const { user_name, email, password, phone, basicSalary, housingAllowance, transportationAllowance, otherAllowance } = req.body
+
+    const existingUser = await dbService.findOne({ model: UserModel, filter: { email } })
+    if (existingUser) {
+        return next(new Error("Email already exists", { cause: 409 }))
+    }
+
+    const hashedPassword = await hashPassword({ plainText: password })
+
+    const totalSalary =
+        (Number(basicSalary) || 0) +
+        (Number(housingAllowance) || 0) +
+        (Number(transportationAllowance) || 0) +
+        (Number(otherAllowance) || 0)
+
+    // Role is hardcoded — HR cannot create Admin or HR accounts
+    const [newUser] = await dbService.create({
+        model: UserModel,
+        data: [{ role: "Employee", user_name, email, password: hashedPassword, phone, basicSalary, housingAllowance, transportationAllowance, otherAllowance, totalSalary }]
+    })
+
+    const leaveBalance = await dbService.create({
+        model: LeaveModel,
+        data: [{ totalDays: 20, leaveType: "annual", employeeID: newUser._id }]
+    })
+
+    return successResponse({ res, statusCode: 201, message: "Employee created successfully", data: { user: newUser, leaveBalance } })
 }
 
 export const updateUser = async (req, res, next) => {

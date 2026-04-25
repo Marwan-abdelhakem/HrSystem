@@ -5,7 +5,6 @@ import RoleRedirect from "./components/guards/RoleRedirect";
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 import LoginPage from "./pages/auth/LoginPage";
-import SignupPage from "./pages/auth/SignupPage";
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
@@ -17,6 +16,7 @@ import CreateMeetingPage from "./pages/admin/CreateMeetingPage";
 // ── HR ────────────────────────────────────────────────────────────────────────
 import HRDashboard from "./pages/dashboards/HRDashboard";
 import EmployeesPage from "./pages/hr/EmployeesPage";
+import CreateEmployeePage from "./pages/hr/CreateEmployeePage";
 import LeaveRequestsPage from "./pages/hr/LeaveRequestsPage";
 import TaskAssignmentPage from "./pages/hr/TaskAssignmentPage";
 
@@ -35,7 +35,6 @@ export default function App() {
         <Routes>
             {/* ── Public ──────────────────────────────────────────────── */}
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignupPage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
             {/* ── Authenticated shell ──────────────────────────────────── */}
@@ -58,6 +57,7 @@ export default function App() {
                     <Route element={<ProtectedRoute roles={["HR"]} />}>
                         <Route path="/hr" element={<HRDashboard />} />
                         <Route path="/hr/employees" element={<EmployeesPage />} />
+                        <Route path="/hr/create" element={<CreateEmployeePage />} />
                         <Route path="/hr/leave" element={<LeaveRequestsPage />} />
                         <Route path="/hr/tasks" element={<TaskAssignmentPage />} />
                     </Route>

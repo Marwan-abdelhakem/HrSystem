@@ -22,6 +22,12 @@ export const createUser = async (payload) => {
     return data.data;
 };
 
+// HR: create an employee — role is always "Employee" on the backend
+export const createEmployee = async (payload) => {
+    const { data } = await api.post("/api/users/createEmployee", payload);
+    return data.data;
+};
+
 export const updateUser = async (id, payload) => {
     const { data } = await api.patch(`/api/users/updateUser/${id}`, payload);
     return data.data;

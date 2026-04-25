@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import api from "../../api/axios";
@@ -152,12 +152,9 @@ export default function LoginPage() {
                         </motion.button>
                     </form>
 
-                    {/* Footer */}
-                    <p className="text-center text-sm text-slate-500 mt-6">
-                        Don't have an account?{" "}
-                        <Link to="/signup" className="text-primary font-medium hover:underline">
-                            Sign up
-                        </Link>
+                    {/* Footer — no public signup, accounts are created by HR/Admin */}
+                    <p className="text-center text-sm text-slate-400 mt-6">
+                        Contact your HR department to get an account.
                     </p>
                 </div>
             </motion.div>
