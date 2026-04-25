@@ -99,8 +99,8 @@ export default function HRDashboard() {
     return (
         <div>
             <PageHeader
-                title={`Hello, ${user?.user_name} 👋`}
-                subtitle="Manage your team's requests, tasks, and attendance."
+                title={`Hello, ${user?.user_name} `}
+                subtitle="Manage your team's requests, tasks."
             />
 
             {/* Stats */}

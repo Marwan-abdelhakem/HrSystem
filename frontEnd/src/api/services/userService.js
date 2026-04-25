@@ -11,6 +11,12 @@ export const getEmployees = async () => {
     return data.data.employees;
 };
 
+// Returns Employee + HR users — for Admin task assignment (both roles can receive tasks)
+export const getAssignableUsers = async () => {
+    const { data } = await api.get("/api/users/getAssignableUsers");
+    return data.data.users;
+};
+
 export const createUser = async (payload) => {
     const { data } = await api.post("/api/users/createUser", payload);
     return data.data;

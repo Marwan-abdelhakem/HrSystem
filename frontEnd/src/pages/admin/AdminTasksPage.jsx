@@ -1,5 +1,3 @@
-// Admin task management — reuses the same UI as HR's TaskAssignmentPage
-// but Admin can also delete any task (uses deleteTask, not deleteCreatedTask)
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,27 +7,41 @@ import {
 import PageHeader from "../../components/ui/PageHeader";
 import useApi from "../../hooks/useApi";
 import useAuth from "../../hooks/useAuth";
-import { getEmployees } from "../../api/services/userService";
+import { getAssignableUsers } from "../../api/services/userService";
 import { getAllTasks, createTask, deleteTask } from "../../api/services/taskService";
+
+// ─── Config ───────────────────────────────────────────────────────────────────
 
 const STATUS = {
     available: { badge: "badge-warning", label: "Pending", icon: <Clock size={11} /> },
     unavailable: { badge: "badge-success", label: "Done", icon: <CheckCircle2 size={11} /> },
 };
 
+const ROLE_BADGE = { HR: "badge-warning", Employee: "badge-success" };
+
 const EMPTY_FORM = {
     title: "", description: "", assignTo: "",
     startDate: "", endDate: "", notes: "",
 };
 
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export default function AdminTasksPage() {
     const { user } = useAuth();
 
+    // All tasks (Admin can see everything)
     const { data: tasks, loading: loadingTasks, error: tasksError, refetch } = useApi(getAllTasks);
-    const { data: employees, loading: loadingEmployees } = useApi(getEmployees);
 
-    const empMap = {};
-    (employees ?? []).forEach((e) => { empMap[e._id] = e.user_name; });
+    // Both HR and Employee users — Admin can assign to either
+    const { data: assignable, loading: loadingAssignable } = useApi(getAssignableUsers);
+
+    // id → user object map for the table
+    const userMap = {};
+    (assignable ?? []).forEach((u) => { userMap[u._id] = u; });
+
+    // Split into groups for the dropdown optgroups
+    const hrUsers = (assignable ?? []).filter((u) => u.role === "HR");
+    const empUsers = (assignable ?? []).filter((u) => u.role === "Employee");
 
     const [modalOpen, setModalOpen] = useState(false);
     const [form, setForm] = useState(EMPTY_FORM);
@@ -86,7 +98,7 @@ export default function AdminTasksPage() {
         <div>
             <PageHeader
                 title="Task Assignment"
-                subtitle="Create and manage tasks assigned to employees."
+                subtitle="Assign tasks to HR staff and employees."
                 action={
                     <motion.button
                         whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
@@ -110,7 +122,7 @@ export default function AdminTasksPage() {
                 )}
             </AnimatePresence>
 
-            {/* Task table */}
+            {/* ── Task table ─────────────────────────────────────────────── */}
             <div className="card-soft">
                 <div className="flex items-center gap-2 mb-5">
                     <ClipboardList size={17} className="text-primary" />
@@ -148,37 +160,56 @@ export default function AdminTasksPage() {
                             <tbody>
                                 {tasks.map((task) => {
                                     const status = STATUS[task.status] ?? STATUS.available;
-                                    const assigneeName = empMap[task.assignTo] ?? task.assignTo?.slice(-6) ?? "—";
+                                    const assignee = userMap[task.assignTo];
+                                    const name = assignee?.user_name ?? task.assignTo?.slice(-6) ?? "—";
+                                    const role = assignee?.role;
                                     const isOverdue = task.status === "available" && new Date(task.endDate) < new Date();
 
                                     return (
                                         <motion.tr key={task._id}
                                             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                             className="hover:bg-slate-50 transition-colors">
+
+                                            {/* Task info */}
                                             <td className="max-w-[220px]">
                                                 <p className="font-medium text-slate-800 text-sm truncate">{task.title}</p>
                                                 <p className="text-xs text-slate-400 truncate mt-0.5">{task.description}</p>
                                             </td>
+
+                                            {/* Assignee — name + role badge */}
                                             <td>
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-7 h-7 rounded-full bg-primary/10 text-primary
                                                                     flex items-center justify-center text-xs font-bold shrink-0">
-                                                        {assigneeName.slice(0, 2).toUpperCase()}
+                                                        {name.slice(0, 2).toUpperCase()}
                                                     </div>
-                                                    <span className="text-sm font-medium text-slate-700">{assigneeName}</span>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-slate-700 leading-tight">{name}</p>
+                                                        {role && (
+                                                            <span className={`badge badge-xs ${ROLE_BADGE[role] ?? "badge-ghost"}`}>
+                                                                {role}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
+
+                                            {/* Due date */}
                                             <td>
                                                 <span className={`text-sm ${isOverdue ? "text-error font-medium" : "text-slate-500"}`}>
                                                     {new Date(task.endDate).toLocaleDateString()}
                                                     {isOverdue && " ⚠"}
                                                 </span>
                                             </td>
+
+                                            {/* Status */}
                                             <td>
                                                 <span className={`badge badge-sm gap-1 ${status.badge}`}>
                                                     {status.icon} {status.label}
                                                 </span>
                                             </td>
+
+                                            {/* Delete */}
                                             <td>
                                                 <motion.button
                                                     whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
@@ -208,23 +239,30 @@ export default function AdminTasksPage() {
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             className="fixed inset-0 z-40 bg-black/30"
                             onClick={() => setModalOpen(false)} />
+
                         <motion.div key="modal"
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             transition={{ duration: 0.2 }}
                             className="fixed inset-0 z-50 flex items-center justify-center p-4">
+
                             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                                {/* Header */}
                                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                                     <div className="flex items-center gap-2">
                                         <ClipboardList size={18} className="text-primary" />
-                                        <h2 className="font-semibold text-slate-800">Assign New Task</h2>
+                                        <div>
+                                            <h2 className="font-semibold text-slate-800">Assign New Task</h2>
+                                            <p className="text-xs text-slate-400">Assign to HR staff or an employee</p>
+                                        </div>
                                     </div>
                                     <button onClick={() => setModalOpen(false)} className="btn btn-ghost btn-sm btn-square">
                                         <X size={16} />
                                     </button>
                                 </div>
 
+                                {/* Form */}
                                 <form onSubmit={handleCreate} className="p-6 space-y-4">
                                     {formError && (
                                         <div className="alert alert-error py-2 text-sm">
@@ -232,6 +270,7 @@ export default function AdminTasksPage() {
                                         </div>
                                     )}
 
+                                    {/* Title */}
                                     <div className="form-control">
                                         <label className="label py-1">
                                             <span className="label-text text-xs font-medium text-slate-600">Title *</span>
@@ -241,6 +280,7 @@ export default function AdminTasksPage() {
                                             className="input input-bordered input-sm bg-white focus:border-primary" />
                                     </div>
 
+                                    {/* Description */}
                                     <div className="form-control">
                                         <label className="label py-1">
                                             <span className="label-text text-xs font-medium text-slate-600">Description *</span>
@@ -251,6 +291,7 @@ export default function AdminTasksPage() {
                                             className="textarea textarea-bordered textarea-sm bg-white focus:border-primary resize-none" />
                                     </div>
 
+                                    {/* Notes */}
                                     <div className="form-control">
                                         <label className="label py-1">
                                             <span className="label-text text-xs font-medium text-slate-600">Notes</span>
@@ -260,6 +301,7 @@ export default function AdminTasksPage() {
                                             className="input input-bordered input-sm bg-white focus:border-primary" />
                                     </div>
 
+                                    {/* Dates */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="form-control">
                                             <label className="label py-1">
@@ -277,26 +319,48 @@ export default function AdminTasksPage() {
                                         </div>
                                     </div>
 
+                                    {/* Assign To — grouped by role */}
                                     <div className="form-control">
                                         <label className="label py-1">
-                                            <span className="label-text text-xs font-medium text-slate-600">Assign To *</span>
+                                            <span className="label-text text-xs font-medium text-slate-600">
+                                                Assign To * <span className="text-slate-400 font-normal">(HR or Employee)</span>
+                                            </span>
                                         </label>
                                         <select name="assignTo" value={form.assignTo} onChange={handleChange}
                                             className="select select-bordered select-sm bg-white focus:border-primary">
                                             <option value="">
-                                                {loadingEmployees ? "Loading employees…" : "Select employee…"}
+                                                {loadingAssignable ? "Loading users…" : "Select a person…"}
                                             </option>
-                                            {(employees ?? []).map((e) => (
-                                                <option key={e._id} value={e._id}>
-                                                    {e.user_name} — {e.email}
-                                                </option>
-                                            ))}
+
+                                            {/* HR group */}
+                                            {hrUsers.length > 0 && (
+                                                <optgroup label="── HR Staff ──">
+                                                    {hrUsers.map((u) => (
+                                                        <option key={u._id} value={u._id}>
+                                                            {u.user_name} — {u.email}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            )}
+
+                                            {/* Employee group */}
+                                            {empUsers.length > 0 && (
+                                                <optgroup label="── Employees ──">
+                                                    {empUsers.map((u) => (
+                                                        <option key={u._id} value={u._id}>
+                                                            {u.user_name} — {u.email}
+                                                        </option>
+                                                    ))}
+                                                </optgroup>
+                                            )}
                                         </select>
-                                        {!loadingEmployees && (employees ?? []).length === 0 && (
-                                            <p className="text-xs text-error mt-1">No employees found.</p>
+
+                                        {!loadingAssignable && (assignable ?? []).length === 0 && (
+                                            <p className="text-xs text-error mt-1">No users found.</p>
                                         )}
                                     </div>
 
+                                    {/* Actions */}
                                     <div className="flex gap-3 pt-2">
                                         <button type="button" onClick={() => setModalOpen(false)}
                                             className="btn btn-ghost btn-sm flex-1">Cancel</button>

@@ -81,7 +81,7 @@ export default function AdminDashboard() {
     return (
         <div>
             <PageHeader
-                title={`Welcome back, ${user?.user_name} 👋`}
+                title={`Welcome back, ${user?.user_name} `}
                 subtitle="Here's a live overview of your organization."
             />
 

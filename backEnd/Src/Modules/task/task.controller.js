@@ -44,12 +44,12 @@ router.delete(
     taskService.deleteTasks
 )
 
-// ─── Employee: tasks assigned to them ────────────────────────────────────────
+// ─── Employee + HR: tasks assigned to them ───────────────────────────────────
 
 router.get(
     "/getTasks/:id",
     authentication,
-    authorization({ role: ["Employee"] }),
+    authorization({ role: ["Employee", "HR"] }),
     taskService.getTasks
 )
 

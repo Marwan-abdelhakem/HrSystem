@@ -26,6 +26,14 @@ export const getEmployees = async (req, res, next) => {
     return successResponse({ res, statusCode: 200, message: "Employees retrieved successfully", data: { employees } })
 }
 
+// Returns Employee + HR users — for Admin task assignment dropdown
+export const getAssignableUsers = async (req, res, next) => {
+    const users = await UserModel.find({ role: { $in: ["Employee", "HR"] } })
+        .select("_id user_name email role")
+        .sort({ role: 1, user_name: 1 })
+    return successResponse({ res, statusCode: 200, message: "Assignable users retrieved successfully", data: { users } })
+}
+
 export const createUser = async (req, res, next) => {
     const { role, user_name, email, password, phone, basicSalary, housingAllowance, transportationAllowance, otherAllowance } = req.body
 

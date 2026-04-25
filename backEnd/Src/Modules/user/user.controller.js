@@ -31,6 +31,15 @@ router.get(
     userService.getEmployees
 )
 
+// ─── Admin: Employee + HR list for task assignment ────────────────────────────
+
+router.get(
+    "/getAssignableUsers",
+    authentication,
+    authorization({ role: ["Admin"] }),
+    userService.getAssignableUsers
+)
+
 router.post(
     "/createUser",
     authentication,

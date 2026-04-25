@@ -79,7 +79,7 @@ export default function EmployeeDashboard() {
     return (
         <div>
             <PageHeader
-                title={`Welcome, ${user?.user_name} 👋`}
+                title={`Welcome, ${user?.user_name} `}
                 subtitle="Here's a snapshot of your tasks and requests."
             />
 
