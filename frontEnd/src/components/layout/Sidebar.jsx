@@ -4,13 +4,11 @@ import {
     LayoutDashboard,
     Users,
     ClipboardList,
-    CalendarCheck,
     FileText,
     CheckSquare,
-    Clock,
     PlusCircle,
-    ScrollText,
-    BarChart3,
+    Briefcase,
+    Video,
     X,
 } from "lucide-react";
 import useAuthStore from "../../store/authStore";
@@ -21,13 +19,13 @@ const NAV_CONFIG = {
     Admin: [
         { label: "Dashboard", to: "/admin", icon: LayoutDashboard },
         { label: "User Management", to: "/admin/users", icon: Users },
-        { label: "Global Reports", to: "/admin/reports", icon: BarChart3 },
-        { label: "System Logs", to: "/admin/logs", icon: ScrollText },
+        { label: "Task Assignment", to: "/admin/tasks", icon: ClipboardList },
+        { label: "Create Job", to: "/admin/jobs", icon: Briefcase },
+        { label: "Create Meeting", to: "/admin/meetings", icon: Video },
     ],
     HR: [
         { label: "Dashboard", to: "/hr", icon: LayoutDashboard },
         { label: "Employee List", to: "/hr/employees", icon: Users },
-        { label: "Attendance", to: "/hr/attendance", icon: CalendarCheck },
         { label: "Leave Requests", to: "/hr/leave", icon: FileText },
         { label: "Task Assignment", to: "/hr/tasks", icon: ClipboardList },
     ],
@@ -36,7 +34,6 @@ const NAV_CONFIG = {
         { label: "My Tasks", to: "/employee/tasks", icon: CheckSquare },
         { label: "My Requests", to: "/employee/requests", icon: FileText },
         { label: "New Request", to: "/employee/request", icon: PlusCircle },
-        { label: "My Attendance", to: "/employee/attendance", icon: Clock },
     ],
 };
 

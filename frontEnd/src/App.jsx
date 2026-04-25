@@ -10,6 +10,9 @@ import SignupPage from "./pages/auth/SignupPage";
 // ── Admin ─────────────────────────────────────────────────────────────────────
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import UsersPage from "./pages/admin/UsersPage";
+import AdminTasksPage from "./pages/admin/AdminTasksPage";
+import CreateJobPage from "./pages/admin/CreateJobPage";
+import CreateMeetingPage from "./pages/admin/CreateMeetingPage";
 
 // ── HR ────────────────────────────────────────────────────────────────────────
 import HRDashboard from "./pages/dashboards/HRDashboard";
@@ -46,6 +49,9 @@ export default function App() {
                     <Route element={<ProtectedRoute roles={["Admin"]} />}>
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/users" element={<UsersPage />} />
+                        <Route path="/admin/tasks" element={<AdminTasksPage />} />
+                        <Route path="/admin/jobs" element={<CreateJobPage />} />
+                        <Route path="/admin/meetings" element={<CreateMeetingPage />} />
                     </Route>
 
                     {/* ── HR ────────────────────────────────────────────────── */}

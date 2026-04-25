@@ -1,19 +1,17 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-    Users,
-    Briefcase,
-    CalendarCheck,
-    TrendingUp,
-    ShieldCheck,
-    Activity,
+    Users, Briefcase, ClipboardList, TrendingUp,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import PageHeader from "../../components/ui/PageHeader";
 import StatCard from "../../components/ui/StatCard";
-import api from "../../api/axios";
-import useAuthStore from "../../store/authStore";
+import useAuth from "../../hooks/useAuth";
+import useApi from "../../hooks/useApi";
+import { getAllUsers } from "../../api/services/userService";
+import { getAllJobs } from "../../api/services/jobService";
+import { getAllTasks } from "../../api/services/taskService";
 
-// ─── Animation helpers ────────────────────────────────────────────────────────
+// ─── Animations ───────────────────────────────────────────────────────────────
 
 const gridVariants = {
     hidden: {},
@@ -25,49 +23,22 @@ const cardVariants = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 };
 
-// ─── Recent activity mock (replace with real API call) ───────────────────────
-
-const MOCK_ACTIVITY = [
-    { id: 1, text: "New employee John Doe was added", time: "2 min ago", type: "user" },
-    { id: 2, text: "Leave request approved for Sara Ahmed", time: "15 min ago", type: "leave" },
-    { id: 3, text: "Task #42 marked as completed", time: "1 hr ago", type: "task" },
-    { id: 4, text: "Salary request from Ahmed Ali approved", time: "3 hr ago", type: "salary" },
-];
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-    const { user } = useAuthStore();
-    const [userCount, setUserCount] = useState("—");
-    const [jobCount, setJobCount] = useState("—");
-    const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const [usersRes, jobsRes] = await Promise.allSettled([
-                    api.get("/api/users/getAllUsers"),
-                    api.get("/api/job/getAlljobs"),
-                ]);
+    const { data: users, loading: loadingUsers } = useApi(getAllUsers);
+    const { data: jobs, loading: loadingJobs } = useApi(getAllJobs);
+    const { data: tasks, loading: loadingTasks } = useApi(getAllTasks);
 
-                if (usersRes.status === "fulfilled") {
-                    setUserCount(usersRes.value.data.data.users?.length ?? 0);
-                }
-                if (jobsRes.status === "fulfilled") {
-                    setJobCount(jobsRes.value.data.data?.length ?? 0);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStats();
-    }, []);
+    const pendingTasks = tasks?.filter((t) => t.status === "available").length ?? 0;
+    const doneTasks = tasks?.filter((t) => t.status === "unavailable").length ?? 0;
 
     const stats = [
         {
             title: "Total Employees",
-            value: loading ? "…" : userCount,
+            value: loadingUsers ? "…" : (users?.length ?? 0),
             icon: <Users size={20} />,
             color: "bg-primary/10",
             iconColor: "text-primary",
@@ -75,35 +46,43 @@ export default function AdminDashboard() {
         },
         {
             title: "Open Positions",
-            value: loading ? "…" : jobCount,
+            value: loadingJobs ? "…" : (jobs?.length ?? 0),
             icon: <Briefcase size={20} />,
             color: "bg-violet-100",
             iconColor: "text-violet-600",
             trend: "Across all departments",
         },
         {
-            title: "Attendance Rate",
-            value: "94%",
-            icon: <CalendarCheck size={20} />,
-            color: "bg-emerald-100",
-            iconColor: "text-emerald-600",
-            trend: "This month",
-        },
-        {
-            title: "Performance",
-            value: "87%",
-            icon: <TrendingUp size={20} />,
+            title: "Pending Tasks",
+            value: loadingTasks ? "…" : pendingTasks,
+            icon: <ClipboardList size={20} />,
             color: "bg-amber-100",
             iconColor: "text-amber-600",
-            trend: "Avg. task completion",
+            trend: "Awaiting completion",
         },
+        {
+            title: "Completed Tasks",
+            value: loadingTasks ? "…" : doneTasks,
+            icon: <TrendingUp size={20} />,
+            color: "bg-emerald-100",
+            iconColor: "text-emerald-600",
+            trend: "All time",
+        },
+    ];
+
+    // Quick nav cards
+    const quickNav = [
+        { label: "User Management", to: "/admin/users", icon: Users, desc: "Add, edit or remove users" },
+        { label: "Task Assignment", to: "/admin/tasks", icon: ClipboardList, desc: "Assign tasks to employees" },
+        { label: "Create Job", to: "/admin/jobs", icon: Briefcase, desc: "Post a new job opening" },
+        { label: "Create Meeting", to: "/admin/meetings", icon: TrendingUp, desc: "Schedule a team meeting" },
     ];
 
     return (
         <div>
             <PageHeader
                 title={`Welcome back, ${user?.user_name} 👋`}
-                subtitle="Here's what's happening across the organization today."
+                subtitle="Here's a live overview of your organization."
             />
 
             {/* Stats grid */}
@@ -120,55 +99,37 @@ export default function AdminDashboard() {
                 ))}
             </motion.div>
 
-            {/* Bottom row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                {/* Recent activity */}
-                <div className="card-soft">
-                    <div className="flex items-center gap-2 mb-5">
-                        <Activity size={17} className="text-primary" />
-                        <h2 className="font-semibold text-slate-700">Recent Activity</h2>
-                    </div>
-
-                    <ul className="space-y-3">
-                        {MOCK_ACTIVITY.map((item) => (
-                            <li key={item.id} className="flex items-start gap-3">
-                                <span className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                                <div className="min-w-0">
-                                    <p className="text-sm text-slate-700 leading-snug">{item.text}</p>
-                                    <p className="text-xs text-slate-400 mt-0.5">{item.time}</p>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-
-                {/* Quick access */}
-                <div className="card-soft">
-                    <div className="flex items-center gap-2 mb-5">
-                        <ShieldCheck size={17} className="text-primary" />
-                        <h2 className="font-semibold text-slate-700">Quick Actions</h2>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {[
-                            { label: "Add Employee", icon: <Users size={16} /> },
-                            { label: "Post a Job", icon: <Briefcase size={16} /> },
-                            { label: "View Reports", icon: <TrendingUp size={16} /> },
-                            { label: "System Logs", icon: <Activity size={16} /> },
-                        ].map(({ label, icon }) => (
-                            <motion.button
-                                key={label}
-                                whileHover={{ scale: 1.03 }}
-                                whileTap={{ scale: 0.97 }}
-                                className="btn btn-outline btn-sm gap-2 justify-start"
-                            >
-                                {icon}
-                                {label}
-                            </motion.button>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            {/* Quick navigation cards */}
+            <motion.div
+                variants={gridVariants}
+                initial="hidden"
+                animate="visible"
+                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5"
+            >
+                {quickNav.map(({ label, to, icon: Icon, desc }) => (
+                    <motion.div
+                        key={to}
+                        variants={cardVariants}
+                        whileHover={{ y: -4, boxShadow: "0 10px 28px rgba(0,0,0,0.08)" }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <Link
+                            to={to}
+                            className="card-soft flex flex-col gap-3 h-full hover:border-primary/30
+                                       transition-colors duration-150 group"
+                        >
+                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center
+                                            justify-center group-hover:bg-primary/20 transition-colors">
+                                <Icon size={20} className="text-primary" />
+                            </div>
+                            <div>
+                                <p className="font-semibold text-slate-800 text-sm">{label}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">{desc}</p>
+                            </div>
+                        </Link>
+                    </motion.div>
+                ))}
+            </motion.div>
         </div>
     );
 }
